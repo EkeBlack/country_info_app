@@ -1,0 +1,9 @@
+{
+  "searchHint": "Search countries",
+  "selectLanguage": "Select Language",
+  "filterOptions": "Filter Options",
+  "filterByContinent": "Filter by Continent",
+  "filterByTimezone": "Filter by Time Zone",
+  "applyFilters": "Apply Filters",
+  "countries": "Countries"
+}
