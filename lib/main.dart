@@ -2,26 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
-  @override
-  _MyAppState createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = ThemeMode.system;
-
-  void _toggleTheme() {
-    setState(() {
-      _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,34 +27,32 @@ class _MyAppState extends State<MyApp> {
           bodyLarge: const TextStyle(color: Colors.white),
           bodyMedium: const TextStyle(color: Colors.grey),
         ),
-        inputDecorationTheme: InputDecorationTheme(
+        inputDecorationTheme: const InputDecorationTheme(
           filled: true,
-          fillColor: const Color(0xFF122235),
+          fillColor: Color(0xFF122235),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.all(Radius.circular(12)),
             borderSide: BorderSide.none,
           ),
         ),
       ),
-      themeMode: _themeMode,
-      home: CountryListScreen(
-        toggleTheme: _toggleTheme,
-        themeMode: _themeMode,
-      ),
+      supportedLocales: const [
+        Locale('en', ''), // English
+        Locale('es', ''), // Spanish
+        Locale('fr', ''), // French
+      ],
+      localizationsDelegates: const [
+        AppLocalizations.delegate, // Generated delegate
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: CountryListScreen(),
     );
   }
 }
 
 class CountryListScreen extends StatefulWidget {
-  final VoidCallback toggleTheme;
-  final ThemeMode themeMode;
-
-  const CountryListScreen({
-    super.key,
-    required this.toggleTheme,
-    required this.themeMode,
-  });
-
   @override
   _CountryListScreenState createState() => _CountryListScreenState();
 }
@@ -109,6 +96,7 @@ class _CountryListScreenState extends State<CountryListScreen> {
         bool matchesContinent = selectedContinents.isEmpty || selectedContinents.contains(country['region']);
         bool matchesTimezone = selectedTimezones.isEmpty ||
             (country['timezones']?.any((timezone) => selectedTimezones.contains(timezone)) ?? false);
+
         return matchesSearch && matchesContinent && matchesTimezone;
       }).toList();
 
@@ -139,9 +127,9 @@ class _CountryListScreenState extends State<CountryListScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16.0),
             children: [
-              const Text(
-                'Select Language',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                AppLocalizations.of(context)?.translate('selectLanguage') ?? '',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               ..._getLanguages().map((language) => ListTile(
@@ -152,7 +140,7 @@ class _CountryListScreenState extends State<CountryListScreen> {
                     selectedLanguage = language.substring(0, 2).toUpperCase();
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Selected language: $language')),
+                    SnackBar(content: Text(AppLocalizations.of(context)?.translate('selectedLanguage', {'language': language}) ?? '')),
                   );
                 },
               )),
@@ -174,12 +162,15 @@ class _CountryListScreenState extends State<CountryListScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16.0),
             children: [
-              const Text(
-                'Filter Options',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                AppLocalizations.of(context)?.translate('filterOptions') ?? '',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
-              const Text('Filter by Continent:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                AppLocalizations.of(context)?.translate('filterByContinent') ?? '',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
               ..._getContinents().map((continent) => CheckboxListTile(
                 title: Text(continent),
                 value: selectedContinents.contains(continent),
@@ -195,26 +186,66 @@ class _CountryListScreenState extends State<CountryListScreen> {
                 },
               )),
               const Divider(),
-              const Text('Filter by Time Zone:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              ..._getTimeZones().map((timezone) => CheckboxListTile(
-                title: Text(timezone),
-                value: selectedTimezones.contains(timezone),
-                onChanged: (value) {
-                  setState(() {
-                    if (value!) {
-                      selectedTimezones.add(timezone);
-                    } else {
-                      selectedTimezones.remove(timezone);
-                    }
-                  });
-                  filterCountries(); // Reapply filters
-                },
-              )),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context); // Close the modal
-                },
-                child: const Text('Apply Filters'),
+              ExpansionTile(
+                title: Text(AppLocalizations.of(context)?.translate('filterByTimezone') ?? ''),
+                trailing: const Icon(Icons.arrow_drop_down), // Dropdown arrow
+                children: [
+                  ..._getTimeZones().map((timezone) => CheckboxListTile(
+                    title: Text(timezone),
+                    value: selectedTimezones.contains(timezone),
+                    onChanged: (value) {
+                      setState(() {
+                        if (value!) {
+                          selectedTimezones.add(timezone);
+                        } else {
+                          selectedTimezones.remove(timezone);
+                        }
+                      });
+                      filterCountries(); // Reapply filters
+                    },
+                  ))
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Apply Filters Button
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context); // Close the modal
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange, // Orange button
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(AppLocalizations.of(context)?.translate('applyFilters') ?? ''),
+                  ),
+                  // Reset Filters Button
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        selectedContinents.clear(); // Clear all selected continents
+                        selectedTimezones.clear(); // Clear all selected time zones
+                      });
+                      filterCountries(); // Reset filters
+                      Navigator.pop(context); // Close the modal
+                    },
+                    style: TextButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: const BorderSide(color: Colors.red), // Red border
+                      ),
+                    ),
+                    child: Text(
+                      AppLocalizations.of(context)?.translate('resetFilters') ?? '',
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -280,16 +311,28 @@ class _CountryListScreenState extends State<CountryListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Countries'),
+        title: Text(AppLocalizations.of(context)?.translate('countries') ?? ''),
         actions: [
           IconButton(
             icon: Icon(
-              widget.themeMode == ThemeMode.dark ||
-                  (widget.themeMode == ThemeMode.system && Theme.of(context).brightness == Brightness.dark)
+              Theme.of(context).brightness == Brightness.dark
                   ? Icons.nightlight_round
                   : Icons.wb_sunny,
             ),
-            onPressed: widget.toggleTheme,
+            onPressed: () {
+              setState(() {
+                final currentTheme = Theme.of(context).brightness;
+                if (currentTheme == Brightness.light) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Switched to Dark Mode')),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Switched to Light Mode')),
+                  );
+                }
+              });
+            },
           ),
         ],
       ),
@@ -301,7 +344,7 @@ class _CountryListScreenState extends State<CountryListScreen> {
               controller: searchController,
               style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
               decoration: InputDecoration(
-                hintText: 'Search countries',
+                hintText: AppLocalizations.of(context)?.translate('searchHint') ?? '',
                 hintStyle: TextStyle(color: Theme.of(context).hintColor),
                 prefixIcon: const Icon(Icons.search),
                 prefixIconColor: Theme.of(context).iconTheme.color,
@@ -356,7 +399,11 @@ class _CountryListScreenState extends State<CountryListScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                       child: Text(
                         letter,
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
                       ),
                     ),
                     ...groupedCountries[letter]!.map((country) => ListTile(
@@ -389,6 +436,10 @@ class _CountryListScreenState extends State<CountryListScreen> {
       ),
     );
   }
+}
+
+extension on AppLocalizations? {
+  translate(String s, [Map<String, String>? map]) {}
 }
 
 class CountryDetailScreen extends StatelessWidget {

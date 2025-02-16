@@ -1,9 +1,9 @@
 {
-  "searchHint": "Search countries",
-  "selectLanguage": "Select Language",
-  "filterOptions": "Filter Options",
-  "filterByContinent": "Filter by Continent",
-  "filterByTimezone": "Filter by Time Zone",
-  "applyFilters": "Apply Filters",
-  "countries": "Countries"
+  "searchHint": "Buscar países",
+  "selectLanguage": "Seleccionar idioma",
+  "filterOptions": "Opciones de filtro",
+  "filterByContinent": "Filtrar por continente",
+  "filterByTimezone": "Filtrar por zona horaria",
+  "applyFilters": "Aplicar filtros",
+  "countries": "Países"
 }
